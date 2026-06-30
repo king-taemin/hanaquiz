@@ -1,0 +1,941 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>かな道場</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;700&family=Noto+Sans+KR:wght@300;400;700&family=Inter:wght@300;400;600;700&display=swap');
+
+:root {
+  --ink:    #1a1a2e;
+  --paper:  #f5f0e8;
+  --red:    #c0392b;
+  --gold:   #d4a017;
+  --muted:  #7a7060;
+  --faint:  #e8e2d6;
+  --white:  #ffffff;
+  --green:  #2e7d5e;
+  --blue:   #1a4b8c;
+  --purple: #6a1b9a;
+  --shadow: rgba(26,26,46,0.12);
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--paper);color:var(--ink);font-family:'Inter','Noto Sans KR',sans-serif;min-height:100vh;display:flex;flex-direction:column;align-items:center}
+
+/* ── HEADER ── */
+header{width:100%;background:var(--ink);padding:12px 20px;display:flex;align-items:center;justify-content:space-between}
+.logo{font-family:'Noto Sans JP',serif;font-size:1.3rem;font-weight:700;color:var(--paper);letter-spacing:.04em}
+.logo span{color:var(--red)}
+.hbar{display:flex;align-items:center;gap:14px}
+.hstat{text-align:center;color:var(--paper);font-size:.68rem;letter-spacing:.06em;text-transform:uppercase;opacity:.7}
+.hstat strong{display:block;font-size:1rem;font-weight:700;opacity:1;color:var(--gold)}
+.xp-pill{background:rgba(255,255,255,.12);border-radius:99px;padding:4px 12px;display:flex;align-items:center;gap:6px;color:var(--paper);font-size:.75rem;font-weight:600}
+.xp-pill .lvbadge{background:var(--gold);color:var(--ink);border-radius:99px;padding:1px 7px;font-size:.68rem;font-weight:700}
+
+/* ── MAIN ── */
+main{width:100%;max-width:560px;padding:16px 14px 48px;display:flex;flex-direction:column;gap:14px}
+
+/* ── SCREEN BASE ── */
+.screen{display:none;flex-direction:column;align-items:center;gap:16px;text-align:center;padding:12px 0}
+.screen.active{display:flex}
+
+/* ── START SCREEN ── */
+.big-kana{font-family:'Noto Sans JP',serif;font-size:4.5rem;font-weight:300;line-height:1;color:var(--ink)}
+.screen-title{font-size:1.3rem;font-weight:700;letter-spacing:-.01em}
+.screen-sub{font-size:.82rem;color:var(--muted);line-height:1.6;max-width:320px}
+
+/* ── MODE BUTTONS ── */
+.mode-row{display:flex;gap:8px;flex-wrap:wrap;justify-content:center}
+.mode-btn{padding:7px 15px;border-radius:99px;border:2px solid var(--faint);background:transparent;font-size:.78rem;font-weight:600;cursor:pointer;color:var(--muted);transition:all .15s}
+.mode-btn.active{border-color:var(--ink);background:var(--ink);color:var(--paper)}
+
+/* ── SESSION PICKER ── */
+.picker-section{width:100%;text-align:left}
+.picker-label{font-size:.68rem;font-weight:700;text-transform:uppercase;letter-spacing:.09em;color:var(--muted);margin-bottom:8px}
+.chip-row{display:flex;gap:7px;flex-wrap:wrap}
+.chip{padding:7px 14px;border-radius:10px;border:2px solid var(--faint);background:var(--white);font-size:.8rem;font-weight:600;cursor:pointer;color:var(--ink);transition:all .15s}
+.chip.active{border-color:var(--blue);background:#e8eef8;color:var(--blue)}
+
+/* ── START BTN ── */
+.start-btn{padding:14px 48px;background:var(--ink);color:var(--paper);border:none;border-radius:14px;font-size:1rem;font-weight:700;cursor:pointer;box-shadow:0 4px 16px var(--shadow);transition:transform .1s}
+.start-btn:active{transform:scale(.97)}
+
+/* ── GAME UI ── */
+#game-ui{display:none;flex-direction:column;gap:12px}
+#game-ui.active{display:flex}
+
+/* ── PROGRESS ── */
+.progress-wrap{display:flex;align-items:center;gap:10px}
+.progress-bar-outer{flex:1;height:8px;background:var(--faint);border-radius:4px;overflow:hidden}
+.progress-bar-inner{height:100%;background:linear-gradient(90deg,var(--blue),var(--purple));border-radius:4px;transition:width .3s ease}
+.progress-label{font-size:.72rem;font-weight:700;color:var(--muted);white-space:nowrap}
+
+/* ── TIMER BAR ── */
+.timer-wrap{height:5px;background:var(--faint);border-radius:3px;overflow:hidden}
+.timer-bar{height:100%;width:100%;background:var(--green);border-radius:3px;transition:width .1s linear,background .3s}
+.timer-bar.warn{background:var(--gold)}
+.timer-bar.danger{background:var(--red)}
+
+/* ── HEARTS ── */
+.hearts{display:flex;gap:4px;font-size:1.2rem;line-height:1}
+.heart{transition:transform .2s,opacity .2s}
+.heart.lost{opacity:.2;transform:scale(.8)}
+
+/* ── CARD ── */
+.card{background:var(--white);border-radius:18px;box-shadow:0 4px 24px var(--shadow);padding:28px 24px 20px;display:flex;flex-direction:column;align-items:center;gap:16px;position:relative;overflow:hidden}
+.card::before{content:'';position:absolute;top:0;left:0;right:0;height:4px;background:linear-gradient(90deg,var(--red),var(--gold))}
+.kana-type-badge{font-size:.65rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);background:var(--faint);padding:3px 10px;border-radius:99px;align-self:flex-start}
+.kana-type-badge.kata{color:var(--blue);background:#e8eef8}
+.kana-char{font-family:'Noto Sans JP',serif;font-size:6.5rem;font-weight:300;line-height:1;color:var(--ink);user-select:none}
+.kana-char.pop{animation:pop .22s ease}
+@keyframes pop{0%{transform:scale(.65);opacity:0}60%{transform:scale(1.1)}100%{transform:scale(1);opacity:1}}
+.combo-badge{font-size:.75rem;font-weight:700;color:var(--gold);min-height:18px;letter-spacing:.04em}
+
+/* ── INPUT ── */
+.input-row{display:flex;gap:8px;width:100%}
+input[type=text]{flex:1;border:2px solid var(--faint);border-radius:10px;padding:11px 14px;font-size:1.05rem;font-family:'Noto Sans KR',sans-serif;color:var(--ink);background:var(--paper);outline:none;transition:border-color .2s,box-shadow .2s}
+input[type=text]:focus{border-color:var(--ink);box-shadow:0 0 0 3px rgba(26,26,46,.1);background:var(--white)}
+input[type=text].correct{border-color:var(--green);background:#f0faf5}
+input[type=text].wrong{border-color:var(--red);background:#fdf0ef;animation:shake .3s}
+@keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-6px)}75%{transform:translateX(6px)}}
+.btn{padding:11px 18px;border:none;border-radius:10px;font-size:.88rem;font-weight:700;cursor:pointer;transition:transform .1s;letter-spacing:.02em}
+.btn:active{transform:scale(.95)}
+.btn-primary{background:var(--ink);color:var(--paper);box-shadow:0 2px 8px var(--shadow)}
+.btn-danger{background:var(--red);color:#fff}
+.feedback{font-size:.85rem;font-weight:700;min-height:20px;color:var(--muted)}
+.feedback.ok{color:var(--green)}
+.feedback.err{color:var(--red)}
+
+/* ── SCORE STRIP ── */
+.score-strip{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+.scard{background:var(--white);border-radius:12px;padding:11px 6px;text-align:center;box-shadow:0 2px 8px var(--shadow)}
+.scard .val{font-size:1.3rem;font-weight:700;color:var(--ink);line-height:1}
+.scard .lbl{font-size:.58rem;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);margin-top:3px}
+.scard.green .val{color:var(--green)}
+.scard.red   .val{color:var(--red)}
+.scard.gold  .val{color:var(--gold)}
+
+/* ── TABS ── */
+.tabs{display:flex;background:var(--faint);border-radius:10px;padding:3px;gap:2px}
+.tab{flex:1;text-align:center;padding:7px;border-radius:7px;font-size:.75rem;font-weight:600;letter-spacing:.03em;cursor:pointer;color:var(--muted);border:none;background:transparent;transition:background .18s,color .18s}
+.tab.active{background:var(--white);color:var(--ink);box-shadow:0 1px 4px var(--shadow)}
+
+/* ── PANELS ── */
+.panel{background:var(--white);border-radius:16px;box-shadow:0 4px 24px var(--shadow);padding:18px;display:none}
+.panel.visible{display:block}
+.panel-title{font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);margin-bottom:12px}
+
+/* ── WRONG LIST ── */
+.wrong-list{display:flex;flex-direction:column;gap:7px;max-height:300px;overflow-y:auto}
+.wrong-item{display:flex;align-items:center;gap:12px;padding:9px 11px;background:var(--paper);border-radius:9px;position:relative}
+.miss-bar{position:absolute;left:0;top:0;bottom:0;width:4px;background:var(--red);border-radius:4px 0 0 4px;opacity:.5}
+.wi-char{font-family:'Noto Sans JP',serif;font-size:1.9rem;font-weight:300;width:34px;text-align:center}
+.wi-info{flex:1}
+.wi-rom{font-size:.82rem;font-weight:700}
+.wi-type{font-size:.65rem;color:var(--muted)}
+.wi-count{font-size:.7rem;font-weight:700;color:var(--red);background:#fdecea;padding:2px 8px;border-radius:99px}
+
+/* ── CALENDAR ── */
+.cal-lbl{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;margin-bottom:4px}
+.cal-lbl span{font-size:.56rem;text-align:center;color:var(--muted);font-weight:700;text-transform:uppercase}
+.cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:4px}
+.cal-day{aspect-ratio:1;border-radius:4px;background:var(--faint)}
+.cal-day.today{outline:2px solid var(--ink)}
+.cal-day.lvl1{background:#c8e6c9}
+.cal-day.lvl2{background:#66bb6a}
+.cal-day.lvl3{background:#2e7d5e}
+.cal-month{font-size:.7rem;color:var(--muted);text-align:center;margin-top:8px}
+.today-stat{display:flex;gap:8px;margin-top:12px}
+.tstat{flex:1;text-align:center;padding:9px;background:var(--paper);border-radius:9px}
+.tstat .v{font-size:1.2rem;font-weight:700}
+.tstat .l{font-size:.6rem;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin-top:2px}
+
+/* ── LEADERBOARD ── */
+.lb-row{display:flex;align-items:center;gap:10px;padding:9px 12px;background:var(--paper);border-radius:9px;margin-bottom:6px}
+.lb-rank{font-size:.85rem;font-weight:700;color:var(--muted);width:22px;text-align:center}
+.lb-rank.gold{color:#d4a017}
+.lb-rank.silver{color:#9e9e9e}
+.lb-rank.bronze{color:#a1622a}
+.lb-name{flex:1;font-size:.85rem;font-weight:600}
+.lb-score{font-size:.82rem;font-weight:700;color:var(--blue)}
+.lb-acc{font-size:.7rem;color:var(--muted)}
+
+/* ── END SCREEN ── */
+.end-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;width:100%;max-width:300px}
+.end-stat{background:var(--paper);border-radius:12px;padding:13px;text-align:center}
+.end-stat .v{font-size:1.4rem;font-weight:700}
+.end-stat .l{font-size:.62rem;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);margin-top:2px}
+.rank-badge{font-size:3rem;line-height:1;margin:4px 0}
+.grade-label{font-size:1rem;font-weight:700;margin-top:4px}
+
+/* ── XP TOAST ── */
+.xp-toast{position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:var(--purple);color:#fff;font-weight:700;font-size:.85rem;padding:8px 20px;border-radius:99px;pointer-events:none;opacity:0;transition:opacity .3s,bottom .4s;z-index:99;white-space:nowrap}
+.xp-toast.show{opacity:1;bottom:96px}
+
+/* ── STREAK FLASH ── */
+.streak-flash{position:fixed;top:64px;left:50%;transform:translateX(-50%);background:var(--gold);color:var(--ink);font-weight:700;font-size:.88rem;padding:7px 18px;border-radius:99px;pointer-events:none;opacity:0;transition:opacity .3s;z-index:99;white-space:nowrap}
+.streak-flash.show{opacity:1}
+
+/* ── LEVEL UP OVERLAY ── */
+.levelup-overlay{position:fixed;inset:0;background:rgba(26,26,46,.7);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:200;opacity:0;pointer-events:none;transition:opacity .3s}
+.levelup-overlay.show{opacity:1;pointer-events:all}
+.levelup-box{background:var(--white);border-radius:24px;padding:40px 48px;text-align:center;box-shadow:0 8px 48px rgba(0,0,0,.3)}
+.levelup-emoji{font-size:3.5rem;line-height:1;margin-bottom:10px}
+.levelup-title{font-size:1.4rem;font-weight:700;margin-bottom:6px}
+.levelup-sub{font-size:.85rem;color:var(--muted);margin-bottom:20px}
+.levelup-btn{padding:12px 36px;background:var(--ink);color:var(--paper);border:none;border-radius:12px;font-size:.95rem;font-weight:700;cursor:pointer}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">かな<span>道場</span></div>
+  <div class="hbar">
+    <div class="hstat"><strong id="h-streak">0</strong>콤보</div>
+    <div class="hstat"><strong id="h-acc">—</strong>정답률</div>
+    <div class="xp-pill">
+      <span class="lvbadge" id="lv-badge">Lv.1</span>
+      <span id="xp-label">0 XP</span>
+    </div>
+  </div>
+</header>
+
+<div class="streak-flash" id="streak-flash"></div>
+<div class="xp-toast" id="xp-toast"></div>
+
+<div class="levelup-overlay" id="levelup-overlay">
+  <div class="levelup-box">
+    <div class="levelup-emoji">🎌</div>
+    <div class="levelup-title" id="lu-title">레벨 업!</div>
+    <div class="levelup-sub" id="lu-sub"></div>
+    <button class="levelup-btn" onclick="closeLevelUp()">계속하기</button>
+  </div>
+</div>
+
+<main>
+
+<!-- ═══ START SCREEN ═══ -->
+<div class="screen active" id="start-screen">
+  <div class="big-kana">あ ア</div>
+  <div class="screen-title">かな 道場</div>
+  <div class="screen-sub">가나를 한글로 읽어 맞혀보세요.<br>오답은 자동으로 복습 목록에 추가됩니다.</div>
+
+  <!-- 문자 범위 -->
+  <div class="picker-section" style="width:100%;max-width:360px">
+    <div class="picker-label">문자 범위</div>
+    <div class="chip-row" id="mode-chips">
+      <div class="chip active" data-mode="both">ひ + カ 전체</div>
+      <div class="chip" data-mode="hira">ひらがな만</div>
+      <div class="chip" data-mode="kata">カタカナ만</div>
+      <div class="chip" data-mode="miss">📝 오답 복습</div>
+    </div>
+  </div>
+
+  <!-- 세션 방식 -->
+  <div class="picker-section" style="width:100%;max-width:360px">
+    <div class="picker-label">세션 방식</div>
+    <div class="chip-row" id="stype-chips">
+      <div class="chip active" data-stype="count">문제 수</div>
+      <div class="chip" data-stype="time">제한 시간</div>
+      <div class="chip" data-stype="endless">무한</div>
+    </div>
+  </div>
+
+  <!-- 세션 값 -->
+  <div class="picker-section" style="width:100%;max-width:360px" id="sval-wrap">
+    <div class="picker-label" id="sval-label">문제 수 선택</div>
+    <div class="chip-row" id="sval-chips">
+      <div class="chip" data-val="10">10문제</div>
+      <div class="chip active" data-val="20">20문제</div>
+      <div class="chip" data-val="30">30문제</div>
+      <div class="chip" data-val="50">50문제</div>
+    </div>
+  </div>
+
+  <!-- 난이도 (타이머 속도) -->
+  <div class="picker-section" style="width:100%;max-width:360px">
+    <div class="picker-label">제한 시간</div>
+    <div class="chip-row" id="diff-chips">
+      <div class="chip" data-diff="8">여유 (8초)</div>
+      <div class="chip active" data-diff="5">보통 (5초)</div>
+      <div class="chip" data-diff="3">빠름 (3초)</div>
+      <div class="chip" data-diff="0">타이머 없음</div>
+    </div>
+  </div>
+
+  <button class="start-btn" onclick="startGame()">연습 시작 →</button>
+</div>
+
+<!-- ═══ GAME UI ═══ -->
+<div id="game-ui">
+  <!-- 진행 바 (문제수 모드) / 남은 시간 표시 (시간 모드) -->
+  <div class="progress-wrap" id="progress-wrap">
+    <div class="progress-bar-outer">
+      <div class="progress-bar-inner" id="progress-bar" style="width:0%"></div>
+    </div>
+    <div class="progress-label" id="progress-label">0 / 20</div>
+  </div>
+
+  <!-- 하트 + 타이머 -->
+  <div style="display:flex;justify-content:space-between;align-items:center;gap:10px">
+    <div class="hearts" id="hearts-wrap"></div>
+    <div class="timer-wrap" style="flex:1"><div class="timer-bar" id="timer-bar"></div></div>
+    <div style="font-size:.78rem;font-weight:700;color:var(--muted);min-width:28px;text-align:right" id="timer-label">5s</div>
+  </div>
+
+  <!-- 문제 카드 -->
+  <div class="card">
+    <div class="kana-type-badge" id="kana-badge">히라가나</div>
+    <div class="kana-char" id="kana-display">あ</div>
+    <div class="combo-badge" id="combo-badge"></div>
+    <div class="input-row">
+      <input type="text" id="answer-input" placeholder="한글로 입력… (예: 아, 카)" autocomplete="off" autocorrect="off" spellcheck="false">
+      <button class="btn btn-primary" onclick="checkAnswer()">확인</button>
+    </div>
+    <div class="feedback" id="feedback"></div>
+  </div>
+
+  <!-- 점수 -->
+  <div class="score-strip">
+    <div class="scard green"><div class="val" id="s-correct">0</div><div class="lbl">정답</div></div>
+    <div class="scard red">  <div class="val" id="s-wrong">0</div><div class="lbl">오답</div></div>
+    <div class="scard gold"> <div class="val" id="s-combo">0</div><div class="lbl">최대콤보</div></div>
+    <div class="scard">      <div class="val" id="s-acc">—</div><div class="lbl">정답률</div></div>
+  </div>
+
+  <button class="btn btn-danger" onclick="endGame()" style="align-self:flex-end;font-size:.75rem;padding:7px 14px">세션 종료</button>
+</div>
+
+<!-- ═══ END SCREEN ═══ -->
+<div class="screen" id="end-screen">
+  <div class="rank-badge" id="end-rank">🥈</div>
+  <div class="screen-title" id="end-title">잘했어요!</div>
+  <div class="grade-label" id="end-grade"></div>
+  <div class="end-grid" id="end-grid"></div>
+  <button class="start-btn" onclick="restartGame()" style="padding:13px 36px;font-size:.92rem">다시 하기</button>
+  <button class="btn" onclick="showStart()" style="font-size:.78rem;color:var(--muted);background:transparent">← 처음으로</button>
+</div>
+
+<!-- ═══ BOTTOM TABS ═══ -->
+<div class="tabs">
+  <button class="tab active" onclick="showPanel('wrong')">📝 오답노트</button>
+  <button class="tab" onclick="showPanel('calendar')">📅 학습 기록</button>
+  <button class="tab" onclick="showPanel('rank')">🏆 랭킹</button>
+</div>
+
+<!-- ═══ WRONG PANEL ═══ -->
+<div class="panel visible" id="panel-wrong">
+  <div class="panel-title">자주 틀리는 글자</div>
+  <div class="wrong-list" id="wrong-list">
+    <div style="text-align:center;color:var(--muted);font-size:.8rem;padding:20px">아직 오답이 없어요 🎉</div>
+  </div>
+</div>
+
+<!-- ═══ CALENDAR PANEL ═══ -->
+<div class="panel" id="panel-calendar">
+  <div class="panel-title">이번 달 학습 기록</div>
+  <div class="cal-lbl"><span>일</span><span>월</span><span>화</span><span>수</span><span>목</span><span>금</span><span>토</span></div>
+  <div class="cal-grid" id="cal-grid"></div>
+  <div class="cal-month" id="cal-month"></div>
+  <div class="today-stat">
+    <div class="tstat"><div class="v" id="td-total">0</div><div class="l">오늘 문제</div></div>
+    <div class="tstat"><div class="v" id="td-correct">0</div><div class="l">오늘 정답</div></div>
+    <div class="tstat"><div class="v" id="td-acc">—</div><div class="l">오늘 정답률</div></div>
+  </div>
+</div>
+
+<!-- ═══ RANK PANEL ═══ -->
+<div class="panel" id="panel-rank">
+  <div class="panel-title">베스트 기록 (상위 10)</div>
+  <div id="rank-list"></div>
+</div>
+
+</main>
+
+<script>
+// ══════════════════════════════════════════════════════
+//  DATA
+// ══════════════════════════════════════════════════════
+const HIRAGANA = [
+  {c:'あ',r:'아',alts:['아']},{c:'い',r:'이',alts:['이']},{c:'う',r:'우',alts:['우']},{c:'え',r:'에',alts:['에']},{c:'お',r:'오',alts:['오']},
+  {c:'か',r:'카',alts:['카']},{c:'き',r:'키',alts:['키']},{c:'く',r:'쿠',alts:['쿠']},{c:'け',r:'케',alts:['케']},{c:'こ',r:'코',alts:['코']},
+  {c:'さ',r:'사',alts:['사']},{c:'し',r:'시',alts:['시']},{c:'す',r:'스',alts:['스']},{c:'せ',r:'세',alts:['세']},{c:'そ',r:'소',alts:['소']},
+  {c:'た',r:'타',alts:['타']},{c:'ち',r:'치',alts:['치']},{c:'つ',r:'츠',alts:['츠']},{c:'て',r:'테',alts:['테']},{c:'と',r:'토',alts:['토']},
+  {c:'な',r:'나',alts:['나']},{c:'に',r:'니',alts:['니']},{c:'ぬ',r:'누',alts:['누']},{c:'ね',r:'네',alts:['네']},{c:'の',r:'노',alts:['노']},
+  {c:'は',r:'하',alts:['하']},{c:'ひ',r:'히',alts:['히']},{c:'ふ',r:'후',alts:['후']},{c:'へ',r:'헤',alts:['헤']},{c:'ほ',r:'호',alts:['호']},
+  {c:'ま',r:'마',alts:['마']},{c:'み',r:'미',alts:['미']},{c:'む',r:'무',alts:['무']},{c:'め',r:'메',alts:['메']},{c:'も',r:'모',alts:['모']},
+  {c:'や',r:'야',alts:['야']},{c:'ゆ',r:'유',alts:['유']},{c:'よ',r:'요',alts:['요']},
+  {c:'ら',r:'라',alts:['라']},{c:'り',r:'리',alts:['리']},{c:'る',r:'루',alts:['루']},{c:'れ',r:'레',alts:['레']},{c:'ろ',r:'로',alts:['로']},
+  {c:'わ',r:'와',alts:['와']},{c:'を',r:'오',alts:['오']},{c:'ん',r:'응',alts:['응','ㄴ']},
+  {c:'が',r:'가',alts:['가']},{c:'ぎ',r:'기',alts:['기']},{c:'ぐ',r:'구',alts:['구']},{c:'げ',r:'게',alts:['게']},{c:'ご',r:'고',alts:['고']},
+  {c:'ざ',r:'자',alts:['자']},{c:'じ',r:'지',alts:['지']},{c:'ず',r:'즈',alts:['즈']},{c:'ぜ',r:'제',alts:['제']},{c:'ぞ',r:'조',alts:['조']},
+  {c:'だ',r:'다',alts:['다']},{c:'ぢ',r:'지',alts:['지']},{c:'づ',r:'즈',alts:['즈']},{c:'で',r:'데',alts:['데']},{c:'ど',r:'도',alts:['도']},
+  {c:'ば',r:'바',alts:['바']},{c:'び',r:'비',alts:['비']},{c:'ぶ',r:'부',alts:['부']},{c:'べ',r:'베',alts:['베']},{c:'ぼ',r:'보',alts:['보']},
+  {c:'ぱ',r:'파',alts:['파']},{c:'ぴ',r:'피',alts:['피']},{c:'ぷ',r:'푸',alts:['푸']},{c:'ぺ',r:'페',alts:['페']},{c:'ぽ',r:'포',alts:['포']},
+];
+const KATAKANA = [
+  {c:'ア',r:'아',alts:['아']},{c:'イ',r:'이',alts:['이']},{c:'ウ',r:'우',alts:['우']},{c:'エ',r:'에',alts:['에']},{c:'オ',r:'오',alts:['오']},
+  {c:'カ',r:'카',alts:['카']},{c:'キ',r:'키',alts:['키']},{c:'ク',r:'쿠',alts:['쿠']},{c:'ケ',r:'케',alts:['케']},{c:'コ',r:'코',alts:['코']},
+  {c:'サ',r:'사',alts:['사']},{c:'シ',r:'시',alts:['시']},{c:'ス',r:'스',alts:['스']},{c:'セ',r:'세',alts:['세']},{c:'ソ',r:'소',alts:['소']},
+  {c:'タ',r:'타',alts:['타']},{c:'チ',r:'치',alts:['치']},{c:'ツ',r:'츠',alts:['츠']},{c:'テ',r:'테',alts:['테']},{c:'ト',r:'토',alts:['토']},
+  {c:'ナ',r:'나',alts:['나']},{c:'ニ',r:'니',alts:['니']},{c:'ヌ',r:'누',alts:['누']},{c:'ネ',r:'네',alts:['네']},{c:'ノ',r:'노',alts:['노']},
+  {c:'ハ',r:'하',alts:['하']},{c:'ヒ',r:'히',alts:['히']},{c:'フ',r:'후',alts:['후']},{c:'ヘ',r:'헤',alts:['헤']},{c:'ホ',r:'호',alts:['호']},
+  {c:'マ',r:'마',alts:['마']},{c:'ミ',r:'미',alts:['미']},{c:'ム',r:'무',alts:['무']},{c:'メ',r:'메',alts:['메']},{c:'モ',r:'모',alts:['모']},
+  {c:'ヤ',r:'야',alts:['야']},{c:'ユ',r:'유',alts:['유']},{c:'ヨ',r:'요',alts:['요']},
+  {c:'ラ',r:'라',alts:['라']},{c:'リ',r:'리',alts:['리']},{c:'ル',r:'루',alts:['루']},{c:'レ',r:'레',alts:['레']},{c:'ロ',r:'로',alts:['로']},
+  {c:'ワ',r:'와',alts:['와']},{c:'ヲ',r:'오',alts:['오']},{c:'ン',r:'응',alts:['응','ㄴ']},
+  {c:'ガ',r:'가',alts:['가']},{c:'ギ',r:'기',alts:['기']},{c:'グ',r:'구',alts:['구']},{c:'ゲ',r:'게',alts:['게']},{c:'ゴ',r:'고',alts:['고']},
+  {c:'ザ',r:'자',alts:['자']},{c:'ジ',r:'지',alts:['지']},{c:'ズ',r:'즈',alts:['즈']},{c:'ゼ',r:'제',alts:['제']},{c:'ゾ',r:'조',alts:['조']},
+  {c:'ダ',r:'다',alts:['다']},{c:'ヂ',r:'지',alts:['지']},{c:'ヅ',r:'즈',alts:['즈']},{c:'デ',r:'데',alts:['데']},{c:'ド',r:'도',alts:['도']},
+  {c:'バ',r:'바',alts:['바']},{c:'ビ',r:'비',alts:['비']},{c:'ブ',r:'부',alts:['부']},{c:'ベ',r:'베',alts:['베']},{c:'ボ',r:'보',alts:['보']},
+  {c:'パ',r:'파',alts:['파']},{c:'ピ',r:'피',alts:['피']},{c:'プ',r:'푸',alts:['푸']},{c:'ペ',r:'페',alts:['페']},{c:'ポ',r:'포',alts:['포']},
+];
+
+// ══════════════════════════════════════════════════════
+//  XP / LEVEL CONFIG
+// ══════════════════════════════════════════════════════
+const LEVELS = [
+  {lv:1,  name:'見習い',    ko:'견습',   xp:0},
+  {lv:2,  name:'初段',      ko:'초단',   xp:100},
+  {lv:3,  name:'二段',      ko:'이단',   xp:250},
+  {lv:4,  name:'三段',      ko:'삼단',   xp:500},
+  {lv:5,  name:'四段',      ko:'사단',   xp:900},
+  {lv:6,  name:'五段',      ko:'오단',   xp:1400},
+  {lv:7,  name:'師範代',    ko:'사범대', xp:2000},
+  {lv:8,  name:'師範',      ko:'사범',   xp:2800},
+  {lv:9,  name:'道場主',    ko:'도장주', xp:3800},
+  {lv:10, name:'師匠',      ko:'사범장', xp:5000},
+];
+function getLevelInfo(xp) {
+  let cur = LEVELS[0];
+  for (const l of LEVELS) { if (xp >= l.xp) cur = l; else break; }
+  const idx = LEVELS.indexOf(cur);
+  const next = LEVELS[idx+1];
+  return { cur, next, idx };
+}
+function calcXpGain(isCorrect, combo, timerLeft, timerMax) {
+  if (!isCorrect) return 0;
+  let base = 10;
+  if (combo >= 10) base = 20;
+  else if (combo >= 5) base = 15;
+  // speed bonus
+  if (timerMax > 0) {
+    const speedRatio = timerLeft / timerMax;
+    if (speedRatio > 0.6) base += 5;
+    else if (speedRatio > 0.3) base += 2;
+  }
+  return base;
+}
+
+// ══════════════════════════════════════════════════════
+//  PERSISTENCE
+// ══════════════════════════════════════════════════════
+function getStore()       { try { return JSON.parse(localStorage.getItem('kanaDojo2')||'{}'); } catch { return {}; } }
+function saveStore(d)     { try { localStorage.setItem('kanaDojo2', JSON.stringify(d)); } catch {} }
+function getMisses()      { return getStore().misses || {}; }
+function addMiss(c)       { const d=getStore(); d.misses=d.misses||{}; d.misses[c]=(d.misses[c]||0)+1; saveStore(d); }
+function clearMiss(c)     { const d=getStore(); if(!d.misses) return; delete d.misses[c]; saveStore(d); }
+function getTotalXp()     { return getStore().xp || 0; }
+function addXp(n)         { const d=getStore(); d.xp=(d.xp||0)+n; saveStore(d); return d.xp; }
+function getTodayKey()    { const n=new Date(); return `${n.getFullYear()}-${String(n.getMonth()+1).padStart(2,'0')}-${String(n.getDate()).padStart(2,'0')}`; }
+function recordDay(t,c)   { const d=getStore(); d.days=d.days||{}; const k=getTodayKey(); const p=d.days[k]||{total:0,correct:0}; d.days[k]={total:p.total+t,correct:p.correct+c}; saveStore(d); }
+function getDays()        { return getStore().days || {}; }
+function getRankings()    { return getStore().rankings || []; }
+function saveRanking(entry) {
+  const d = getStore();
+  d.rankings = d.rankings || [];
+  d.rankings.push(entry);
+  d.rankings.sort((a,b) => b.score - a.score);
+  d.rankings = d.rankings.slice(0, 10);
+  saveStore(d);
+}
+function calcScore(correct, maxCombo, acc, timerMax) {
+  // base + speed tier bonus + combo bonus + accuracy bonus
+  const speedTier = timerMax === 3 ? 2 : timerMax === 5 ? 1.5 : 1;
+  return Math.round(correct * 100 * speedTier + maxCombo * 20 + acc * 500);
+}
+
+// ══════════════════════════════════════════════════════
+//  GAME STATE
+// ══════════════════════════════════════════════════════
+let mode      = 'both';   // char mode
+let stype     = 'count';  // count | time | endless
+let sval      = 20;       // question count OR seconds
+let timerMax  = 5;        // per-question seconds (0 = none)
+
+let gameMode, gameType, gameTarget;
+let correct, wrong, combo, maxCombo;
+let sessionTotal, sessionCorrect;
+let timerInterval, sessionTimerInterval;
+let timeLeft, sessionTimeLeft;
+let gameActive = false;
+let current = null;
+let lives, maxLives = 3;
+
+// ══════════════════════════════════════════════════════
+//  PICKER INTERACTIONS
+// ══════════════════════════════════════════════════════
+function bindChips(groupId, onChange) {
+  document.getElementById(groupId).querySelectorAll('.chip').forEach(chip => {
+    chip.addEventListener('click', () => {
+      document.getElementById(groupId).querySelectorAll('.chip').forEach(c => c.classList.remove('active'));
+      chip.classList.add('active');
+      onChange(chip.dataset);
+    });
+  });
+}
+
+bindChips('mode-chips',  d => { mode = d.mode; });
+bindChips('diff-chips',  d => { timerMax = +d.diff; });
+bindChips('stype-chips', d => {
+  stype = d.stype;
+  const wrap = document.getElementById('sval-wrap');
+  const label = document.getElementById('sval-label');
+  const chips = document.getElementById('sval-chips');
+  if (stype === 'endless') {
+    wrap.style.display = 'none';
+  } else {
+    wrap.style.display = '';
+    if (stype === 'count') {
+      label.textContent = '문제 수 선택';
+      chips.innerHTML = `
+        <div class="chip" data-val="10">10문제</div>
+        <div class="chip active" data-val="20">20문제</div>
+        <div class="chip" data-val="30">30문제</div>
+        <div class="chip" data-val="50">50문제</div>`;
+      sval = 20;
+    } else {
+      label.textContent = '제한 시간 선택';
+      chips.innerHTML = `
+        <div class="chip" data-val="60">1분</div>
+        <div class="chip active" data-val="120">2분</div>
+        <div class="chip" data-val="180">3분</div>
+        <div class="chip" data-val="300">5분</div>`;
+      sval = 120;
+    }
+    bindChips('sval-chips', d2 => { sval = +d2.val; });
+  }
+});
+bindChips('sval-chips', d => { sval = +d.val; });
+
+// ══════════════════════════════════════════════════════
+//  POOL & WEIGHT
+// ══════════════════════════════════════════════════════
+function buildPool() {
+  if (mode === 'hira') return [...HIRAGANA];
+  if (mode === 'kata') return [...KATAKANA];
+  if (mode === 'miss') {
+    const m = getMisses();
+    const all = [...HIRAGANA, ...KATAKANA];
+    const p = all.filter(x => m[x.c]);
+    return p.length ? p : all;
+  }
+  return [...HIRAGANA, ...KATAKANA];
+}
+function weightedPick(pool) {
+  const m = getMisses();
+  const w = pool.map(x => 1 + (m[x.c]||0)*2);
+  const total = w.reduce((a,b) => a+b, 0);
+  let r = Math.random()*total;
+  for (let i=0; i<pool.length; i++) { r -= w[i]; if (r<=0) return pool[i]; }
+  return pool[pool.length-1];
+}
+
+// ══════════════════════════════════════════════════════
+//  HEARTS
+// ══════════════════════════════════════════════════════
+function renderHearts() {
+  const w = document.getElementById('hearts-wrap');
+  if (stype === 'endless') { w.innerHTML=''; return; }
+  w.innerHTML = Array.from({length:maxLives}, (_,i) =>
+    `<span class="heart${i >= lives ? ' lost' : ''}">❤️</span>`
+  ).join('');
+}
+function loseHeart() {
+  lives--;
+  renderHearts();
+  if (lives <= 0) {
+    setTimeout(() => endGame(true), 600);
+    return true;
+  }
+  return false;
+}
+
+// ══════════════════════════════════════════════════════
+//  GAME FLOW
+// ══════════════════════════════════════════════════════
+function startGame() {
+  gameMode = mode; gameType = stype; gameTarget = sval;
+  correct=0; wrong=0; combo=0; maxCombo=0;
+  sessionTotal=0; sessionCorrect=0;
+  lives = maxLives;
+
+  document.getElementById('start-screen').classList.remove('active');
+  document.getElementById('end-screen').classList.remove('active');
+  document.getElementById('game-ui').style.display='flex';
+  document.getElementById('game-ui').style.flexDirection='column';
+  document.getElementById('game-ui').style.gap='12px';
+
+  // session countdown (time mode)
+  clearInterval(sessionTimerInterval);
+  if (gameType === 'time') {
+    sessionTimeLeft = gameTarget;
+    updateSessionProgress();
+    sessionTimerInterval = setInterval(() => {
+      sessionTimeLeft--;
+      updateSessionProgress();
+      if (sessionTimeLeft <= 0) { clearInterval(sessionTimerInterval); endGame(false); }
+    }, 1000);
+  }
+
+  renderHearts();
+  updateScoreStrip();
+  updateHeader();
+  gameActive = true;
+  nextQuestion();
+}
+
+function showStart() {
+  document.getElementById('start-screen').classList.add('active');
+  document.getElementById('end-screen').classList.remove('active');
+  document.getElementById('game-ui').style.display='none';
+}
+
+function restartGame() {
+  document.getElementById('end-screen').classList.remove('active');
+  startGame();
+}
+
+function endGame(heartbreak=false) {
+  gameActive = false;
+  clearInterval(timerInterval);
+  clearInterval(sessionTimerInterval);
+  document.getElementById('game-ui').style.display='none';
+
+  if (sessionTotal > 0) recordDay(sessionTotal, sessionCorrect);
+
+  const acc = sessionTotal ? Math.round(sessionCorrect/sessionTotal*100) : 0;
+  const score = calcScore(sessionCorrect, maxCombo, acc/100, timerMax);
+  const modeLabel = {both:'전체',hira:'히라가나',kata:'가타카나',miss:'오답복습'}[gameMode];
+  saveRanking({ score, correct:sessionCorrect, total:sessionTotal, acc, maxCombo,
+                mode:modeLabel, stype:gameType, diff:timerMax,
+                date: new Date().toLocaleDateString('ko-KR') });
+
+  // grade
+  let rank='🥉', grade='연습 중', title = heartbreak ? '아깝다! 다시 해봐요 💪' : '수고했어요!';
+  if (acc>=95 && maxCombo>=10) { rank='🏆'; grade='S 랭크 — 완벽!'; }
+  else if (acc>=85) { rank='🥇'; grade='A 랭크 — 훌륭해요!'; }
+  else if (acc>=70) { rank='🥈'; grade='B 랭크 — 잘했어요!'; }
+  else if (acc>=50) { rank='🥉'; grade='C 랭크 — 계속 연습해요'; }
+  else              { rank='😅'; grade='D 랭크 — 다시 도전!'; }
+  if (heartbreak) { rank='💔'; }
+
+  document.getElementById('end-rank').textContent = rank;
+  document.getElementById('end-title').textContent = title;
+  document.getElementById('end-grade').textContent = grade;
+  document.getElementById('end-grid').innerHTML = `
+    <div class="end-stat"><div class="v">${sessionTotal}</div><div class="l">총 문제</div></div>
+    <div class="end-stat"><div class="v">${sessionCorrect}</div><div class="l">정답</div></div>
+    <div class="end-stat"><div class="v">${acc}%</div><div class="l">정답률</div></div>
+    <div class="end-stat"><div class="v">${maxCombo}</div><div class="l">최대 콤보</div></div>
+    <div class="end-stat"><div class="v">${score.toLocaleString()}</div><div class="l">점수</div></div>
+    <div class="end-stat"><div class="v">${timerMax||'∞'}s</div><div class="l">제한시간</div></div>
+  `;
+
+  document.getElementById('end-screen').classList.add('active');
+  updateWrongPanel();
+  updateCalendar();
+  updateRankPanel();
+}
+
+function nextQuestion() {
+  clearInterval(timerInterval);
+  if (!gameActive) return;
+
+  // count mode: check done
+  if (gameType === 'count' && sessionTotal >= gameTarget) { endGame(false); return; }
+
+  const pool = buildPool();
+  current = weightedPick(pool);
+  const isHira = HIRAGANA.some(x => x.c === current.c);
+  const badge = document.getElementById('kana-badge');
+  badge.textContent = isHira ? '히라가나' : '가타카나';
+  badge.className = 'kana-type-badge' + (isHira ? '' : ' kata');
+
+  const el = document.getElementById('kana-display');
+  el.textContent = current.c;
+  el.classList.remove('pop'); void el.offsetWidth; el.classList.add('pop');
+
+  document.getElementById('answer-input').value = '';
+  document.getElementById('answer-input').className = '';
+  document.getElementById('feedback').textContent = '';
+  document.getElementById('feedback').className = 'feedback';
+  document.getElementById('answer-input').focus();
+
+  updateSessionProgress();
+  if (timerMax > 0) startPerQuestionTimer();
+  else { document.getElementById('timer-bar').style.width='100%'; document.getElementById('timer-label').textContent='∞'; }
+}
+
+// ══════════════════════════════════════════════════════
+//  TIMERS
+// ══════════════════════════════════════════════════════
+function startPerQuestionTimer() {
+  timeLeft = timerMax;
+  updateTimerBar(1);
+  timerInterval = setInterval(() => {
+    timeLeft -= 0.1;
+    updateTimerBar(timeLeft / timerMax);
+    if (timeLeft <= 0) { clearInterval(timerInterval); onTimeout(); }
+  }, 100);
+}
+function updateTimerBar(frac) {
+  const bar = document.getElementById('timer-bar');
+  bar.style.width = Math.max(0, frac*100) + '%';
+  bar.className = frac>0.5 ? 'timer-bar' : frac>0.25 ? 'timer-bar warn' : 'timer-bar danger';
+  const secs = Math.max(0, Math.ceil(timeLeft));
+  document.getElementById('timer-label').textContent = timerMax > 0 ? secs+'s' : '∞';
+}
+function onTimeout() {
+  if (!gameActive) return;
+  wrong++; sessionTotal++; combo=0;
+  addMiss(current.c);
+  showFeedback(`시간 초과! 정답: ${current.r}`, 'err');
+  document.getElementById('answer-input').classList.add('wrong');
+  updateScoreStrip(); updateHeader(); updateWrongPanel();
+  const dead = loseHeart();
+  if (!dead) setTimeout(() => { if(gameActive) nextQuestion(); }, 1100);
+}
+
+// ══════════════════════════════════════════════════════
+//  PROGRESS BAR
+// ══════════════════════════════════════════════════════
+function updateSessionProgress() {
+  const wrap = document.getElementById('progress-wrap');
+  const bar  = document.getElementById('progress-bar');
+  const lbl  = document.getElementById('progress-label');
+  if (gameType === 'count') {
+    wrap.style.display='flex';
+    const pct = Math.min(100, sessionTotal/gameTarget*100);
+    bar.style.width = pct + '%';
+    lbl.textContent = `${sessionTotal} / ${gameTarget}`;
+  } else if (gameType === 'time') {
+    wrap.style.display='flex';
+    const pct = Math.min(100, (1 - sessionTimeLeft/gameTarget)*100);
+    bar.style.width = pct + '%';
+    const m = Math.floor(sessionTimeLeft/60), s = sessionTimeLeft%60;
+    lbl.textContent = `${m}:${String(s).padStart(2,'0')} 남음`;
+  } else {
+    wrap.style.display='none';
+  }
+}
+
+// ══════════════════════════════════════════════════════
+//  ANSWER CHECK
+// ══════════════════════════════════════════════════════
+function checkAnswer() {
+  if (!gameActive || !current) return;
+  clearInterval(timerInterval);
+  const inp = document.getElementById('answer-input');
+  const val = inp.value.trim();
+  if (!val) { if (timerMax>0) startPerQuestionTimer(); return; }
+
+  sessionTotal++;
+  const ok = current.alts.includes(val);
+
+  if (ok) {
+    correct++; sessionCorrect++; combo++;
+    maxCombo = Math.max(maxCombo, combo);
+    clearMiss(current.c);
+    inp.classList.add('correct');
+    showFeedback(`정답! ${current.c} = ${current.r}`, 'ok');
+    document.getElementById('combo-badge').textContent = combo>=2 ? `🔥 ${combo} 콤보` : '';
+    if (combo>0 && combo%5===0) flashStreak(`🔥 ${combo} 콤보!`);
+    // XP
+    const xpGain = calcXpGain(true, combo, timeLeft, timerMax);
+    const newXp = addXp(xpGain);
+    showXpToast(`+${xpGain} XP`);
+    checkLevelUp(newXp);
+    updateHeader();
+  } else {
+    wrong++; combo=0;
+    addMiss(current.c);
+    inp.classList.add('wrong');
+    showFeedback(`오답. 정답: ${current.r}`, 'err');
+    document.getElementById('combo-badge').textContent = '';
+    updateWrongPanel();
+    const dead = loseHeart();
+    if (dead) return;
+  }
+  updateScoreStrip(); updateHeader();
+  setTimeout(() => { if(gameActive) nextQuestion(); }, 800);
+}
+
+document.getElementById('answer-input').addEventListener('keydown', e => {
+  if (e.key==='Enter' && !e.isComposing) checkAnswer();
+});
+
+// ══════════════════════════════════════════════════════
+//  XP & LEVEL UI
+// ══════════════════════════════════════════════════════
+function updateHeader() {
+  const xp = getTotalXp();
+  const { cur, next } = getLevelInfo(xp);
+  document.getElementById('lv-badge').textContent = `Lv.${cur.lv}`;
+  const xpInLevel = xp - cur.xp;
+  const xpNeeded  = next ? next.xp - cur.xp : 1;
+  document.getElementById('xp-label').textContent = next
+    ? `${xpInLevel}/${xpNeeded} XP`
+    : `${xp} XP MAX`;
+  const total = correct+wrong;
+  document.getElementById('h-streak').textContent = combo;
+  document.getElementById('h-acc').textContent = total ? Math.round(correct/total*100)+'%' : '—';
+}
+function checkLevelUp(newXp) {
+  const { cur } = getLevelInfo(newXp);
+  const prevXp = newXp - (calcXpGain(true, combo, timeLeft, timerMax)); // rough prev
+  const { cur: prevLv } = getLevelInfo(prevXp);
+  if (cur.lv > prevLv.lv) {
+    document.getElementById('lu-title').textContent = `레벨 업! Lv.${cur.lv}`;
+    document.getElementById('lu-sub').textContent = `${cur.name} (${cur.ko}) 칭호를 획득했어요!`;
+    const ov = document.getElementById('levelup-overlay');
+    ov.classList.add('show');
+    clearInterval(timerInterval);
+    clearInterval(sessionTimerInterval);
+  }
+}
+function closeLevelUp() {
+  document.getElementById('levelup-overlay').classList.remove('show');
+  if (gameActive) {
+    if (gameType === 'time' && sessionTimeLeft > 0) {
+      sessionTimerInterval = setInterval(() => {
+        sessionTimeLeft--;
+        updateSessionProgress();
+        if (sessionTimeLeft <= 0) { clearInterval(sessionTimerInterval); endGame(false); }
+      }, 1000);
+    }
+    nextQuestion();
+  }
+}
+function showXpToast(msg) {
+  const t = document.getElementById('xp-toast');
+  t.textContent = msg; t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 1200);
+}
+
+// ══════════════════════════════════════════════════════
+//  UI HELPERS
+// ══════════════════════════════════════════════════════
+function showFeedback(msg, cls) {
+  const el = document.getElementById('feedback');
+  el.textContent=msg; el.className='feedback '+cls;
+}
+function flashStreak(msg) {
+  const el = document.getElementById('streak-flash');
+  el.textContent=msg; el.classList.add('show');
+  setTimeout(()=>el.classList.remove('show'),1800);
+}
+function updateScoreStrip() {
+  document.getElementById('s-correct').textContent = correct;
+  document.getElementById('s-wrong').textContent = wrong;
+  document.getElementById('s-combo').textContent = maxCombo;
+  const t=correct+wrong;
+  document.getElementById('s-acc').textContent = t ? Math.round(correct/t*100)+'%' : '—';
+}
+function romFromKo(h) {
+  const m={아:'a',이:'i',우:'u',에:'e',오:'o',카:'ka',키:'ki',쿠:'ku',케:'ke',코:'ko',사:'sa',시:'shi',스:'su',세:'se',소:'so',타:'ta',치:'chi',츠:'tsu',테:'te',토:'to',나:'na',니:'ni',누:'nu',네:'ne',노:'no',하:'ha',히:'hi',후:'fu',헤:'he',호:'ho',마:'ma',미:'mi',무:'mu',메:'me',모:'mo',야:'ya',유:'yu',요:'yo',라:'ra',리:'ri',루:'ru',레:'re',로:'ro',와:'wa',응:'n',가:'ga',기:'gi',구:'gu',게:'ge',고:'go',자:'za',지:'ji',즈:'zu',제:'ze',조:'zo',다:'da',바:'ba',비:'bi',부:'bu',베:'be',보:'bo',파:'pa',피:'pi',푸:'pu',페:'pe',포:'po'};
+  return m[h]||'';
+}
+
+// ══════════════════════════════════════════════════════
+//  WRONG PANEL
+// ══════════════════════════════════════════════════════
+function updateWrongPanel() {
+  const misses = getMisses();
+  const entries = Object.entries(misses).sort((a,b)=>b[1]-a[1]);
+  const con = document.getElementById('wrong-list');
+  if (!entries.length) { con.innerHTML='<div style="text-align:center;color:var(--muted);font-size:.8rem;padding:20px">아직 오답이 없어요 🎉</div>'; return; }
+  const all = [...HIRAGANA,...KATAKANA];
+  con.innerHTML = entries.map(([ch,cnt])=>{
+    const info=all.find(x=>x.c===ch);
+    const isH=HIRAGANA.some(x=>x.c===ch);
+    return `<div class="wrong-item">
+      <div class="miss-bar"></div>
+      <div class="wi-char">${ch}</div>
+      <div class="wi-info">
+        <div class="wi-rom">${info?info.r:'?'} <span style="font-size:.68rem;color:var(--muted);font-weight:400">(${info?romFromKo(info.r):''})</span></div>
+        <div class="wi-type">${isH?'히라가나':'가타카나'}</div>
+      </div>
+      <div class="wi-count">×${cnt}</div>
+    </div>`;
+  }).join('');
+}
+
+// ══════════════════════════════════════════════════════
+//  CALENDAR
+// ══════════════════════════════════════════════════════
+function updateCalendar() {
+  const days=getDays(), now=new Date();
+  const year=now.getFullYear(), month=now.getMonth();
+  const todayKey=getTodayKey();
+  const first=new Date(year,month,1), last=new Date(year,month+1,0);
+  let html='';
+  for (let i=0;i<first.getDay();i++) html+='<div class="cal-day"></div>';
+  for (let d=1;d<=last.getDate();d++) {
+    const k=`${year}-${String(month+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+    const data=days[k];
+    let cls='cal-day'+(k===todayKey?' today':'');
+    if (data) { const acc=data.correct/data.total; cls+= acc>=0.85?' lvl3':acc>=0.6?' lvl2':' lvl1'; }
+    html+=`<div class="${cls}" title="${data?data.total+'문제 '+data.correct+'정답':''}"></div>`;
+  }
+  document.getElementById('cal-grid').innerHTML=html;
+  const mn=['1월','2월','3월','4월','5월','6월','7월','8월','9월','10월','11월','12월'];
+  document.getElementById('cal-month').textContent=`${year}년 ${mn[month]}`;
+  const td=days[todayKey];
+  document.getElementById('td-total').textContent=td?td.total:0;
+  document.getElementById('td-correct').textContent=td?td.correct:0;
+  document.getElementById('td-acc').textContent=td?Math.round(td.correct/td.total*100)+'%':'—';
+}
+
+// ══════════════════════════════════════════════════════
+//  RANK PANEL
+// ══════════════════════════════════════════════════════
+function updateRankPanel() {
+  const rankings = getRankings();
+  const con = document.getElementById('rank-list');
+  if (!rankings.length) { con.innerHTML='<div style="text-align:center;color:var(--muted);font-size:.8rem;padding:20px">아직 기록이 없어요</div>'; return; }
+  const medals=['gold','silver','bronze'];
+  con.innerHTML = rankings.map((r,i)=>`
+    <div class="lb-row">
+      <div class="lb-rank ${medals[i]||''}">${i===0?'🥇':i===1?'🥈':i===2?'🥉':i+1}</div>
+      <div class="lb-name">${r.mode} · ${r.stype==='count'?r.total+'문':r.stype==='time'?'타임':'무한'} · ${r.diff||'∞'}s</div>
+      <div style="text-align:right">
+        <div class="lb-score">${r.score.toLocaleString()}점</div>
+        <div class="lb-acc">${r.acc}% · ${r.date}</div>
+      </div>
+    </div>`).join('');
+}
+
+// ══════════════════════════════════════════════════════
+//  TABS
+// ══════════════════════════════════════════════════════
+function showPanel(which) {
+  const tabs = document.querySelectorAll('.tab');
+  const panels = ['panel-wrong','panel-calendar','panel-rank'];
+  const order  = ['wrong','calendar','rank'];
+  tabs.forEach((t,i)=>t.classList.toggle('active', order[i]===which));
+  panels.forEach((p,i)=>document.getElementById(p).classList.toggle('visible', order[i]===which));
+  if (which==='calendar') updateCalendar();
+  if (which==='rank') updateRankPanel();
+}
+
+// ══════════════════════════════════════════════════════
+//  INIT
+// ══════════════════════════════════════════════════════
+updateHeader();
+updateWrongPanel();
+updateCalendar();
+</script>
+</body>
+</html>
